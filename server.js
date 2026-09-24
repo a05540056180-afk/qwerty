@@ -134,11 +134,29 @@ async function callHandler(call){
     }
     replyText=sanitizeForYemot(replyText)||'מצטער לא הצלחתי לנסח תשובה נסה שוב';
     // Play the AI answer first; dashboard transcription is best-effort and must not delay the caller.
-    try{await call.id_list_message([{type:'text',data:replyText}],{prependToNextAction:true});}catch(e){logDetailedError('playback',e);}
-    try{transcript=await transcribeForDashboard(audioBase64);}catch{transcript='לא ניתן היה לתמלל את ההקלטה';}
-    await addConversationEntry({phone:callerPhone,callId,userText:transcript,geminiText:replyText});
+    try{
+      await call.id_list_message(
+        [{type:'text',data:replyText}],
+        {prependToNextAction:true}
+      );
+    }catch(e){
+      logDetailedError('playback',e);
+    }
+
+    try{
+      transcript=await transcribeForDashboard(audioBase64);
+    }catch{
+      transcript='לא ניתן היה לתמלל את ההקלטה';
+    }
+
+    await addConversationEntry({
+      phone:callerPhone,
+      callId,
+      userText:transcript,
+      geminiText:replyText
+    });
+
     activeCalls.delete(activeKey);
-    catch(e){logDetailedError('playback',e);await call.id_list_message([{type:'text',data:'מצטער הייתה תקלה בהקראת התשובה'}],{prependToNextAction:true});}
   }
 }
 router.get('/',callHandler);
